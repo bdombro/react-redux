@@ -1,10 +1,15 @@
 {
+  "name": "@bdombro/react-redux",
+  "version": "0.0.0",
+  "description": "Testbed for redux patterns",
+  "main": "",
+  "license": "ISC",
   "scripts": {
     "start": "snowpack dev",
     "build": "snowpack build",
     "test": "web-test-runner \"src/**/*.test.tsx\"",
-    "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",
-    "lint": "prettier --check \"src/**/*.{js,jsx,ts,tsx}\""
+    "validate": "npm run lint && tsc --noEmit",
+    "lint": "eslint --cache --ext .ts,.tsx src"
   },
   "dependencies": {
     "react": "^17.0.2",
@@ -21,9 +26,12 @@
     "@types/react": "^17.0.4",
     "@types/react-dom": "^17.0.3",
     "@types/snowpack-env": "^2.3.3",
+    "@typescript-eslint/eslint-plugin": "^4.8.1",
+    "@typescript-eslint/parser": "^4.8.1",
     "@web/test-runner": "^0.13.3",
     "chai": "^4.3.4",
-    "prettier": "^2.2.1",
+    "eslint": "^7.18.0",
+    "eslint-plugin-simple-import-sort": "^6.0.1",
     "snowpack": "^3.3.7",
     "typescript": "^4.2.4"
   }
