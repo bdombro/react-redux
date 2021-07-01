@@ -1,39 +1,59 @@
-import './App.css'
+import React from 'react'
+import { useDispatch,useSelector } from 'react-redux'
 
-import React, { useEffect,useState } from 'react'
-
-import logo from './logo.svg'
+import { useGetPokemonByNameQuery } from './api'
+import { decrement, increment } from './slices/counterSlice'
+import type { RootState } from './store'
 
 export default function App() {
-	// Create the count state.
-	const [count, setCount] = useState(0)
-	// Create the counter (+1 every second).
-	useEffect(() => {
-		const timer = setTimeout(() => setCount(count + 1), 1000)
-		return () => clearTimeout(timer)
-	}, [count, setCount])
-	// Return the App component.
 	return (
-		<div className="App">
-			<header className="App-header">
-				<img src={logo} className="App-logo" alt="logo" />
-				<p>
-          Edit <code>src/App.tsx</code> and save to reload.
-				</p>
-				<p>
-          Page has been open for <code>{count}</code> seconds.
-				</p>
-				<p>
-					<a
-						className="App-link"
-						href="https://reactjs.org"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-            Learn React
-					</a>
-				</p>
-			</header>
+		<div style={{textAlign: 'center', margin: 50}}>
+			<CounterComponent />
+			<PokemonComponent nameSlug={'bulbasaur'} />
+			<PokemonComponent nameSlug={'pikachu'} />
+			<PokemonComponent nameSlug={'pikachu'} />
+		</div>
+	)
+}
+
+function CounterComponent() {
+	const count = useSelector((state: RootState) => state.counter.value)
+	const dispatch = useDispatch()
+
+	return (
+		<div>
+			<button
+				aria-label="Decrement value"
+				onClick={() => dispatch(decrement())}
+			>
+          -
+			</button>{' '}
+			<span>{count}</span>{' '}
+			<button
+				aria-label="Increment value"
+				onClick={() => dispatch(increment())}
+			>
+          +
+			</button>
+		</div>
+	)
+}
+
+function PokemonComponent({nameSlug}: {nameSlug: string}) {
+	const { data, error, isLoading } = useGetPokemonByNameQuery(nameSlug)
+
+	return (
+		<div>
+			{error ? (
+				<>Oh no, there was an error</>
+			) : isLoading ? (
+				<>Loading...</>
+			) : data ? (
+				<>
+					<h3>{data.species.name}</h3>
+					<img src={data.sprites.front_shiny} alt={data.species.name} />
+				</>
+			) : null}
 		</div>
 	)
 }
