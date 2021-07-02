@@ -1,6 +1,12 @@
-# New Project
+# REACT-REDUX
 
 > ✨ Bootstrapped with Create Snowpack App (CSA).
+
+A demonstration of [Redux-Toolkit](https://redux-toolkit.js.org), Reduxs' recommended way to integrate with React.
+
+Features:
+- [Slices](https://redux-toolkit.js.org/tutorials/quick-start)
+- [RTK Query](https://redux-toolkit.js.org/tutorials/rtk-query) with an API and with a gRPC-web client
 
 ## Available Scripts
 

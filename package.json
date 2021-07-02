@@ -1,7 +1,7 @@
 {
   "name": "@bdombro/react-redux",
   "version": "0.0.0",
-  "description": "Testbed for redux patterns",
+  "description": "A demonstration of Redux-Toolkit with Slices and API",
   "main": "",
   "license": "ISC",
   "scripts": {
