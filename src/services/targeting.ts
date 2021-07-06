@@ -14,7 +14,7 @@ export default async function getClient() {
 	}
 }
 
-interface Category {
+export interface Category {
 	id: number
 	tag: string
 	clickCount: number

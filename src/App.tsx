@@ -1,6 +1,7 @@
-import React from 'react'
+import React, {useCallback} from 'react'
 import { useDispatch,useSelector } from 'react-redux'
 
+import type { Category } from './services/targeting'
 import { useGetPokemonByNameQuery } from './store/api/pokeapi'
 import { useGetCategoriesQuery, useGetCategoryQuery, useLogClickMutation } from './store/api/targeting'
 import { decrement, increment } from './store/slices/counterSlice'
@@ -21,11 +22,11 @@ export default function App() {
 			<PokemonComponent nameSlug={'pikachu'} />
 			<PokemonComponent nameSlug={'pikachu'} />
 			<h3>GRPC-Web Example</h3>
-			<CategoriesComponent />
-			<CategoriesComponent />
-			<CategoryComponent id={1} />
-			<CategoryComponent id={1} />
-			<CategoryComponent id={1} />
+			<CategoriesComponentRtk />
+			<CategoriesComponentRtk />
+			<CategoryComponentRtk id={1} />
+			<CategoryComponentRtk id={1} />
+			<CategoryComponentRtk id={1} />
 		</div>
 	)
 }
@@ -72,19 +73,50 @@ function PokemonComponent({nameSlug}: {nameSlug: string}) {
 	)
 }
 
-function CategoriesComponent() {
-	const { data: categories, error, isLoading } = useGetCategoriesQuery({})
+function CategoriesComponentRtk() {
+	const query = useGetCategoriesQuery({})
 	const [logClick] = useLogClickMutation()
+	const onClick = useCallback(onClickCb, [])
+	return <CategoriesComponentView {...query} onClick={onClick} />
 
-	type Categories = Exclude<typeof categories, undefined>
+	function onClickCb(e: any, category: Category) {
+		e.preventDefault()
+		logClick({id: category.id})
+			.then(r => 'error' in r && console.error(r.error.message))
+	}
+}
 
+function CategoryComponentRtk({id}: {id: number}) {
+	const query = useGetCategoryQuery({id})
+	const [logClick] = useLogClickMutation()
+	const onClick = useCallback(onClickCb, [])
+	return <CategoryComponentView {...query} onClick={onClick} />
+
+	function onClickCb(e: any, category: Category) {
+		e.preventDefault()
+		logClick({id: category.id})
+			.then(r => 'error' in r && console.error(r.error.message))
+	}
+}
+
+function CategoriesComponentView({
+	data,
+	error,
+	isLoading,
+	onClick
+}: {
+	data?: readonly Category[],
+	error?: any,
+	isLoading: boolean,
+	onClick(e: any, category: Category): any
+}) {
 	return (
 		<div>
 			<h4>Category Click Counts</h4>
 			{isLoading ? (
 				<>Loading...</>
-			)	: categories !== undefined ? (
-				categories.map(c => (
+			)	: data !== undefined ? (
+				data.map(c => (
 					<div key={c.id}>
 						<a href="#" onClick={e => onClick(e, c)}>{c.tag}</a>{' '}
 						- {c.clickCount}
@@ -95,29 +127,29 @@ function CategoriesComponent() {
 			)}
 		</div>
 	)
-
-	function onClick(e: any, category: Categories[0]) {
-		e.preventDefault()
-		logClick({id: category.id})
-			.then(r => 'error' in r && console.error(r.error.message))
-	}
 }
 
-function CategoryComponent({id}: {id: number}) {
-	const { data: category, error, isLoading } = useGetCategoryQuery({id})
-	const [logClick] = useLogClickMutation()
-
-	type Category = Exclude<typeof category, undefined>
+function CategoryComponentView({
+	data,
+	error,
+	isLoading,
+	onClick
+}: {
+	data?: Category,
+	error?: any,
+	isLoading: boolean,
+	onClick(e: any, category: Category): any
+}) {
 
 	return (
 		<div>
 			<h4>Category</h4>
 			{isLoading ? (
 				<>Loading...</>
-			)	: category !== undefined ? (
+			)	: data !== undefined ? (
 				<div>
-					<a href="#" onClick={e => onClick(e, category)}>{category.tag}</a>{' '}
-							- {category.clickCount}
+					<a href="#" onClick={e => onClick(e, data)}>{data.tag}</a>{' '}
+							- {data.clickCount}
 				</div>
 			) : (
 				<>Error: {error?.message || 'unknown'}</>
@@ -125,9 +157,5 @@ function CategoryComponent({id}: {id: number}) {
 		</div>
 	)
 
-	function onClick(e: any, category: Category) {
-		e.preventDefault()
-		logClick({id: category.id})
-			.then(r => 'error' in r && console.error(r.error.message))
-	}
+	
 }
