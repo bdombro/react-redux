@@ -1,14 +1,14 @@
 import { miniSerializeError } from '@reduxjs/toolkit'
 import { createApi } from '@reduxjs/toolkit/query/react'
 
-import getClient from '../../services/targeting'
+import {getClient} from '../../services/targeting'
 
 type Client = ReturnTypeP<typeof getClient>
 interface TargetingBaseQueryArgs<P extends Record<string,any>> {method: keyof Client, params: P}
 
 export const targetingApi = createApi({
 	reducerPath: 'targetingApi',
-	baseQuery: targetingServiceBaseQuery,
+	baseQuery,
 	tagTypes: ['Category'],
 	endpoints: (builder) => ({
 		getCategory: builder.query<ReturnTypeP<Client['getCategory']>, Parameters<Client['getCategory']>[0]>({
@@ -43,10 +43,10 @@ export const {
 } = targetingApi
 
 
-async function targetingServiceBaseQuery(args: TargetingBaseQueryArgs<any>) {
+async function baseQuery({method, params}: TargetingBaseQueryArgs<any>) {
 	const client = await getClient()
 	try {
-		const res = await client[args.method](args.params)
+		const res = await client[method](params)
 		return { data: res }
 	} catch(e) {
 		return { error: miniSerializeError(e) }

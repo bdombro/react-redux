@@ -7,6 +7,7 @@ A demonstration of [Redux-Toolkit](https://redux-toolkit.js.org), Reduxs' recomm
 Features:
 - [Slices](https://redux-toolkit.js.org/tutorials/quick-start)
 - [RTK Query](https://redux-toolkit.js.org/tutorials/rtk-query) with an API and with a gRPC-web client
+- useAsync - A custom fetch hook, similar to react-query
 
 ## Available Scripts
 
