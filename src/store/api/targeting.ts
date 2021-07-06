@@ -45,9 +45,8 @@ export const {
 
 async function targetingServiceBaseQuery(args: TargetingBaseQueryArgs<any>) {
 	const client = await getClient()
-	const metadata = null
 	try {
-		const res = await client[args.method](args.params, metadata)
+		const res = await client[args.method](args.params)
 		return { data: res }
 	} catch(e) {
 		return { error: miniSerializeError(e) }
