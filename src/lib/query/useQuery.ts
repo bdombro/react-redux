@@ -1,6 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useUpdateEffect } from 'react-use'
 
+type FetcherResponse<FetcherShape extends PromiseFnc> = ThenArg<ReturnType<FetcherShape>>;
+type FetcherResponseNoError<FetcherShape extends PromiseFnc> = Exclude<FetcherResponse<FetcherShape>, Error>;
+interface HookState<Fetcher extends PromiseFnc> {
+	isLoading: boolean
+	data?: FetcherResponseNoError<Fetcher>
+	error?: Error
+	refetch(): Promise<FetcherResponse<Fetcher>>
+}
+
 /**
  * Hookifies a fetcher callback function with typesafety, helpful options, smart caching
  * and race de-duping
@@ -28,9 +37,7 @@ import { useUpdateEffect } from 'react-use'
  *     const users8 = useQuery(getUsers2, [1, 10]) // no type error
  *   }
  */
-export default function useQuery<
-	FetcherShape extends PromiseFnc
->(
+export default function useQuery<FetcherShape extends PromiseFnc>(
 	// Fetcher function to use
 	fetcher: FetcherShape,
 	// parameters to pass to the fetcher function
@@ -40,9 +47,7 @@ export default function useQuery<
 		refetchOnMount?: boolean
 		refetchInterval?: number
 	} = {},
-) {
-	type ResponseShape = ThenArg<ReturnType<FetcherShape>>;
-	type ResponseShapeNoError = Exclude<ResponseShape, Error>;
+): HookState<FetcherShape> {
 
 	const { cache } = useQuery
 
@@ -59,7 +64,7 @@ export default function useQuery<
 		() => `${fetcher.name}-${fastHash(fetcher.toString())}-${fastHash(JSON.stringify(params))}`,
 		[paramState],
 	)
-	const [state, setState] = useState<HookState<ResponseShapeNoError>>(initialize)
+	const [state, setState] = useState<HookState<FetcherShape>>(initialize)
 
 	useEffect(watchParams, [...params])
 	useEffect(subscribe, [paramState])
@@ -111,7 +116,7 @@ export default function useQuery<
 	/**
 	 * Calculate the initial state and trigger fetch
 	 */
-	function initialize(): HookState<ResponseShapeNoError> {
+	function initialize(): HookState<FetcherShape> {
 		let hit = cache.get(cacheKey)
 
 		if (!hit) {
@@ -223,29 +228,6 @@ export default function useQuery<
 		return () => {}
 	}
 }
-
-interface HookState<ResponseShape> {
-	isLoading: boolean
-	data?: ResponseShape
-	error?: Error
-	refetch(): Promise<ResponseShape>
-}
-
-// useQuery.modes = {
-// 	// On mount, will return cache and not refetch if cache is available
-// 	vivaLaCache: 'vivaLaCache',
-// 	// Will never return cache
-// 	noCache: 'noCache',
-// 	// Will return cache, refetch in background, and re-render. See https://web.dev/stale-while-revalidate/
-// 	staleWhileRefresh: 'staleWhileRefresh',
-// 	// Will remain in loading state until refetch is manually called
-// 	lazy: 'lazy',
-// } as const
-// type HookModesType =
-// 	| typeof useQuery.modes.vivaLaCache
-// 	| typeof useQuery.modes.noCache
-// 	| typeof useQuery.modes.staleWhileRefresh
-// 	| typeof useQuery.modes.lazy
 
 useQuery.cache = new Map<
 	string,

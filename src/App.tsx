@@ -194,8 +194,7 @@ function PokemonUseQueryCustom({nameSlug}: {nameSlug: string}) {
 }
 function CategoriesUseQueryCustom() {
 	const query = useQueryCustom(
-		api.getCategories,
-		[],
+		api.getCategories, [],
 		{refetchOnMount: false, refetchInterval: 10_000}
 	)
 	const logClickM = useMutationCustom((id: number) => api.logClick({id}))

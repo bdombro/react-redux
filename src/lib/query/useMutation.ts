@@ -1,5 +1,15 @@
 import {useCallback, useState} from 'react'
 
+interface HookState<MutatorShape extends PromiseFnc> {
+	mutate(...params: Parameters<MutatorShape>): Promise<ThenArg<ReturnType<MutatorShape>>>
+	isLoading: boolean
+	data?: MutatorShape
+	error?: Error
+}
+
+/**
+ * Hookifies a mutation function to make it stateful
+ */
 export default function useMutation<
 	MutatorShape extends PromiseFnc
 >(
@@ -56,11 +66,4 @@ export default function useMutation<
 				)
 		return res
 	}
-}
-
-interface HookState<MutatorShape extends PromiseFnc> {
-	mutate(...params: Parameters<MutatorShape>): Promise<ThenArg<ReturnType<MutatorShape>>>
-	isLoading: boolean
-	data?: MutatorShape
-	error?: Error
 }
