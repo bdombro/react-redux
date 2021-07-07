@@ -9,57 +9,61 @@ import { useUpdateEffect } from 'react-use'
  * useAync will only call the fetcher once and return the response to both components
  *
  * @param fetcher - an async function that returns data. Supports fetchers that throw errors or return an Error
- * @param options - options for the hook: mode and pollInterval
- * @param params - rest parameters to pass to fetcher
+ * @param params - parameters to pass to fetcher
+ * @param options - options for the hook: mode and refetchInterval
  *
  * Ex.
  *   const getUsers  = async () => {const c = new GrpcClient(); c.searchUsers({page, pageSize})
  *   const getUsers2 = async (page: number, pageSize: number) => {const c = new GrpcClient(); c.searchUsers({page, pageSize})
  *
  *   function MyComponent() {
- *     const users1 = useAsync(getUsers) // no type error
- *     const users2 = useAsync(getUsers, {}) // no type error
- *     const users3 = useAsync(getUsers, {mode: 'noCache'}) // no type error
- *     const users4 = useAsync(getUsers, {}, 1, 10) // type error unexpected args
+ *     const users1 = useQuery(getUsers) // type error missing params arg
+ *     const users2 = useQuery(getUsers, []) // no type error
+ *     const users3 = useQuery(getUsers, [], {mode: 'noCache'}) // no type error
+ *     const users4 = useQuery(getUsers, [1, 10]) // type error unexpected args
  *
- *     const users5 = useAsync(getUsers2) // type error missing args page and pageSize
- *     const users6 = useAsync(getUsers2, {}) // type error missing args page and pageSize
- *     const users7 = useAsync(getUsers2, {mode: 'noCache'}) // type error missing args page and pageSize
- *     const users8 = useAsync(getUsers2, {}, 1, 10) // no type error
+ *     const users5 = useQuery(getUsers2) // type error missing params arg
+ *     const users6 = useQuery(getUsers2, []) // type error missing args page and pageSize
+ *     const users7 = useQuery(getUsers2, [], {mode: 'noCache'}) // type error missing args page and pageSize
+ *     const users8 = useQuery(getUsers2, [1, 10]) // no type error
  *   }
  */
-export default function useAsync<
-	FetcherShape extends (...props: any) => Promise<any>
+export default function useQuery<
+	FetcherShape extends PromiseFnc
 >(
 	// Fetcher function to use
 	fetcher: FetcherShape,
-	// Hook options: mode and pollInterval
-	options: { mode?: HookModesType; pollInterval?: number } = {},
-	// rest parameters to pass to the fetcher function
-	...params: Parameters<FetcherShape>
+	// parameters to pass to the fetcher function
+	params: Parameters<FetcherShape>,
+	options: {
+		staleWhileRefresh?: boolean
+		refetchOnMount?: boolean
+		refetchInterval?: number
+	} = {},
 ) {
 	type ResponseShape = ThenArg<ReturnType<FetcherShape>>;
 	type ResponseShapeNoError = Exclude<ResponseShape, Error>;
 
-	const { cache, modes } = useAsync
+	const { cache } = useQuery
 
-	const { mode = modes.staleWhileRefresh, pollInterval } = options
-
-	const cacheKey = useMemo(
-		() => `${fetcher.name}-${fastHash(fetcher.toString())}-${fastHash(JSON.stringify(params))}`,
-		[...params],
-	)
+	const {
+		staleWhileRefresh = true,
+		refetchOnMount = true,
+		refetchInterval
+	} = options
 
 	const refetchCb = useCallback(fetcherWithRaceDedup, [fetcherWithRaceDedup])
 
-	const [state, setState] = useState<HookState<ResponseShapeNoError>>(
-		initialize,
-	)
 	const [paramState, setParamState] = useState({params, version: 0})
+	const cacheKey = useMemo(
+		() => `${fetcher.name}-${fastHash(fetcher.toString())}-${fastHash(JSON.stringify(params))}`,
+		[paramState],
+	)
+	const [state, setState] = useState<HookState<ResponseShapeNoError>>(initialize)
 
 	useEffect(watchParams, [...params])
 	useEffect(subscribe, [paramState])
-	useEffect(poll, [mode])
+	useEffect(poll, [paramState, refetchInterval])
 	useUpdateEffect(() => {initialize()}, [paramState])
 
 	return state
@@ -70,6 +74,7 @@ export default function useAsync<
 	}
 	
 	function subscribe() {
+		console.log('sub')
 		const hit = cache.get(cacheKey)!
 		const key = Math.max(0, ...Array.from(hit?.subscribers.keys() ?? [])) + 1
 		hit?.subscribers.set(key, () => {
@@ -121,13 +126,8 @@ export default function useAsync<
 			cache.set(cacheKey, hit)
 		}
 
-		const cacheAllowed = [
-			modes.vivaLaCache,
-			modes.staleWhileRefresh,
-		].includes(mode as any)
-
 		const initialState =
-			hit?.value && cacheAllowed
+			hit?.value && staleWhileRefresh
 				? {
 					isLoading: false,
 					data: hit.value,
@@ -141,11 +141,7 @@ export default function useAsync<
 					refetch: refetchCb,
 				}
 
-		const alwaysRefetch = [modes.staleWhileRefresh, modes.noCache].includes(
-			mode as any,
-		)
-
-		if (hit?.value === undefined || alwaysRefetch) fetcherWithRaceDedup()
+		if (hit?.value === undefined || refetchOnMount) fetcherWithRaceDedup()
 
 		return initialState
 	}
@@ -210,18 +206,18 @@ export default function useAsync<
 	}
 
 	/**
-	 * If pollInterval specified, refetch in that interval with race handling
+	 * If refetchInterval specified, refetch in that interval with race handling
 	 */
 	function poll() {
-		if (pollInterval) {
+		if (refetchInterval) {
 			const interval = setInterval(() => {
 				const hit = cache.get(cacheKey) || {
 					fetching: false,
 					value: undefined,
 					time: 0,
 				}
-				if (Date.now() - hit.time > pollInterval) fetcherWithRaceDedup()
-			}, pollInterval)
+				if (Date.now() - hit.time > refetchInterval) fetcherWithRaceDedup()
+			}, refetchInterval)
 			return () => clearInterval(interval)
 		}
 		return () => {}
@@ -229,29 +225,29 @@ export default function useAsync<
 }
 
 interface HookState<ResponseShape> {
-	isLoading: boolean;
-	data?: ResponseShape;
-	error?: Error;
-	refetch(): Promise<ResponseShape>;
+	isLoading: boolean
+	data?: ResponseShape
+	error?: Error
+	refetch(): Promise<ResponseShape>
 }
 
-useAsync.modes = {
-	// On mount, will return cache and not refetch if cache is available
-	vivaLaCache: 'vivaLaCache',
-	// Will never return cache
-	noCache: 'noCache',
-	// Will return cache, refetch in background, and re-render. See https://web.dev/stale-while-revalidate/
-	staleWhileRefresh: 'staleWhileRefresh',
-	// Will remain in loading state until refetch is manually called
-	lazy: 'lazy',
-} as const
-type HookModesType =
-	| typeof useAsync.modes.vivaLaCache
-	| typeof useAsync.modes.noCache
-	| typeof useAsync.modes.staleWhileRefresh
-	| typeof useAsync.modes.lazy
+// useQuery.modes = {
+// 	// On mount, will return cache and not refetch if cache is available
+// 	vivaLaCache: 'vivaLaCache',
+// 	// Will never return cache
+// 	noCache: 'noCache',
+// 	// Will return cache, refetch in background, and re-render. See https://web.dev/stale-while-revalidate/
+// 	staleWhileRefresh: 'staleWhileRefresh',
+// 	// Will remain in loading state until refetch is manually called
+// 	lazy: 'lazy',
+// } as const
+// type HookModesType =
+// 	| typeof useQuery.modes.vivaLaCache
+// 	| typeof useQuery.modes.noCache
+// 	| typeof useQuery.modes.staleWhileRefresh
+// 	| typeof useQuery.modes.lazy
 
-useAsync.cache = new Map<
+useQuery.cache = new Map<
 	string,
 	{
 		fetching: boolean
@@ -267,16 +263,16 @@ useAsync.cache = new Map<
 	const maxAge = 10 * 60 * 1000
 	setInterval(() => {
 		const now = Date.now()
-		useAsync.cache.forEach((value, key, map) => {
+		useQuery.cache.forEach((value, key, map) => {
 			if (now - value.time > maxAge) map.delete(key)
 		})
 	}, maxAge / 2 + 1)
 })()
 
-useAsync.clearCache = function (prefixes: string[]) {
-	Array.from(useAsync.cache.keys())
+useQuery.invalidateQueries = function (prefixes: string[]) {
+	Array.from(useQuery.cache.keys())
 		.filter(k => prefixes.some(p => k.startsWith(p)))
-		.forEach(k => useAsync.cache.get(k)?.refetch())
+		.forEach(k => useQuery.cache.get(k)?.refetch())
 }
 
 /**

@@ -1,4 +1,4 @@
-type PromiseFnc = (...args: any) => Promise<any>
+type PromiseFnc = (...args: any[]) => Promise<any>
 
 type ThenArg<T> = T extends PromiseLike<infer U> ? U : T;
 
