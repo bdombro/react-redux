@@ -46,6 +46,7 @@ export default function useQuery<FetcherShape extends PromiseFnc>(
 		staleWhileRefresh?: boolean
 		refetchOnMount?: boolean
 		refetchInterval?: number
+		cacheKey?: string
 	} = {},
 ): HookState<FetcherShape> {
 
@@ -54,15 +55,16 @@ export default function useQuery<FetcherShape extends PromiseFnc>(
 	const {
 		staleWhileRefresh = true,
 		refetchOnMount = true,
-		refetchInterval
+		refetchInterval,
+		cacheKey,
 	} = options
 
 	const refetchCb = useCallback(fetcherWithRaceDedup, [fetcherWithRaceDedup])
 
 	const [paramState, setParamState] = useState({params, version: 0})
-	const cacheKey = useMemo(
-		() => `${fetcher.name}-${fastHash(fetcher.toString())}-${fastHash(JSON.stringify(params))}`,
-		[paramState],
+	const cacheKeyM = useMemo(
+		() => cacheKey || `${fetcher.name}-${fastHash(fetcher.toString())}-${fastHash(JSON.stringify(params))}`,
+		[cacheKey, paramState],
 	)
 	const [state, setState] = useState<HookState<FetcherShape>>(initialize)
 
@@ -80,10 +82,10 @@ export default function useQuery<FetcherShape extends PromiseFnc>(
 	
 	function subscribe() {
 		console.log('sub')
-		const hit = cache.get(cacheKey)!
+		const hit = cache.get(cacheKeyM)!
 		const key = Math.max(0, ...Array.from(hit?.subscribers.keys() ?? [])) + 1
 		hit?.subscribers.set(key, () => {
-			const latest = cache.get(cacheKey)!
+			const latest = cache.get(cacheKeyM)!
 			latest.fetchP
 				?.then(result => {
 					if (JSON.stringify(result) !== JSON.stringify(state.data))
@@ -106,9 +108,9 @@ export default function useQuery<FetcherShape extends PromiseFnc>(
 					return error
 				})
 		})
-		cache.set(cacheKey, hit)
+		cache.set(cacheKeyM, hit)
 		return () => {
-			const hit = cache.get(cacheKey)
+			const hit = cache.get(cacheKeyM)
 			hit?.subscribers.delete(key)
 		}
 	}
@@ -117,7 +119,7 @@ export default function useQuery<FetcherShape extends PromiseFnc>(
 	 * Calculate the initial state and trigger fetch
 	 */
 	function initialize(): HookState<FetcherShape> {
-		let hit = cache.get(cacheKey)
+		let hit = cache.get(cacheKeyM)
 
 		if (!hit) {
 			hit = {
@@ -128,7 +130,7 @@ export default function useQuery<FetcherShape extends PromiseFnc>(
 				subscribers: new Map(),
 				refetch: () => fetcherWithRaceDedup(),
 			}
-			cache.set(cacheKey, hit)
+			cache.set(cacheKeyM, hit)
 		}
 
 		const initialState =
@@ -158,7 +160,7 @@ export default function useQuery<FetcherShape extends PromiseFnc>(
 	 * useAync will only call the fetcher once and return the response to both components
 	 */
 	function fetcherWithRaceDedup() {
-		const hit = cache.get(cacheKey)
+		const hit = cache.get(cacheKeyM)
 
 		if (hit?.fetchP && hit?.value && Date.now() - hit?.time < 50)
 			return hit.fetchP
@@ -171,7 +173,7 @@ export default function useQuery<FetcherShape extends PromiseFnc>(
 		const fetchP = fetcher(...(params as any))
 
 		// Set the cache to be aware that a fetch is in progress
-		cache.set(cacheKey, {
+		cache.set(cacheKeyM, {
 			fetching: true,
 			fetchP: fetchP,
 			value: hit?.value,
@@ -183,8 +185,8 @@ export default function useQuery<FetcherShape extends PromiseFnc>(
 		// Update the state and cache once the fetch has completed
 		fetchP
 			.then(result => {
-				const hit2 = cache.get(cacheKey)!
-				cache.set(cacheKey, {
+				const hit2 = cache.get(cacheKeyM)!
+				cache.set(cacheKeyM, {
 					...hit2,
 					fetching: false,
 					value: result,
@@ -195,8 +197,8 @@ export default function useQuery<FetcherShape extends PromiseFnc>(
 				return result
 			})
 			.catch(error => {
-				const hit2 = cache.get(cacheKey)!
-				cache.set(cacheKey, {
+				const hit2 = cache.get(cacheKeyM)!
+				cache.set(cacheKeyM, {
 					...hit2,
 					fetching: false,
 					value: undefined,
@@ -216,7 +218,7 @@ export default function useQuery<FetcherShape extends PromiseFnc>(
 	function poll() {
 		if (refetchInterval) {
 			const interval = setInterval(() => {
-				const hit = cache.get(cacheKey) || {
+				const hit = cache.get(cacheKeyM) || {
 					fetching: false,
 					value: undefined,
 					time: 0,

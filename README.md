@@ -2,12 +2,13 @@
 
 > ✨ Bootstrapped with Create Snowpack App (CSA).
 
-A demonstration of [Redux-Toolkit](https://redux-toolkit.js.org), Reduxs' recommended way to integrate with React.
+Demonstrations of [Redux-Toolkit](https://redux-toolkit.js.org) Slices, RTK, react-query, and a custom react-query
 
 Features:
-- [Slices](https://redux-toolkit.js.org/tutorials/quick-start)
-- [RTK Query](https://redux-toolkit.js.org/tutorials/rtk-query) with an API and with a gRPC-web client
-- useAsync - A custom fetch hook, similar to react-query
+- [Redux-Toolkit Slices](https://redux-toolkit.js.org/tutorials/quick-start) - Redux' recommended store pattern
+- [Redux-Toolkit RTK Query](https://redux-toolkit.js.org/tutorials/rtk-query) - Redux' recommended network layer
+- [react-query](https://npmjs.org/package/react-query) - A popular react network layer
+- query - A lean, custom alternative of react-query
 
 ## Available Scripts
 

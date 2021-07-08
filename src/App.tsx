@@ -81,33 +81,6 @@ function RtkDemo() {
 		<CategoryRtk id={1} />
 	</div>
 }
-function PokemonRtk({nameSlug}: {nameSlug: string}) {
-	const query = useGetPokemonByNameQuery(nameSlug)
-	return <PokemonView {...query} />
-}
-function CategoriesRtk() {
-	const query = useGetCategoriesQuery({})
-	const [logClick] = useLogClickMutation()
-	const onClick = useCallback(onClickCb, [])
-	return <CategoriesView {...query} onClick={onClick} />
-	function onClickCb(e: any, category: Category) {
-		e.preventDefault()
-		logClick({id: category.id})
-			.then(r => 'error' in r && console.error(r.error.message))
-	}
-}
-function CategoryRtk({id}: {id: number}) {
-	const query = useGetCategoryQuery({id})
-	const [logClick] = useLogClickMutation()
-	const onClick = useCallback(onClickCb, [])
-	return <CategoryView {...query} onClick={onClick} />
-	function onClickCb(e: any, category: Category) {
-		e.preventDefault()
-		logClick({id: category.id})
-			.then(r => 'error' in r && console.error(r.error.message))
-	}
-}
-
 function ReactQueryDemo() {
 	return (
 		<QueryClientProvider client={queryClient}>
@@ -129,44 +102,6 @@ function ReactQueryDemo() {
 		</QueryClientProvider>
 	)
 }
-function PokemonReactQuery({nameSlug}: {nameSlug: string}) {
-	const query = useQuery(
-		['getPokemonByName', nameSlug],
-		() => api.getPokemonByName(nameSlug),
-		{refetchOnMount: false},
-	)
-	return <PokemonView {...query} />
-}
-function CategoriesReactQuery() {
-	const query = useQuery(
-		cacheKeys.category,
-		() => api.getCategories(),
-		{refetchOnMount: false, refetchInterval: 10_000},
-	)
-	const logClickM = useMutation((id: number) => api.logClick({id}))
-	const onClick = useCallback(onClickCb, [])
-	return <CategoriesView {...query} onClick={onClick} />
-	function onClickCb(e: any, category: Category) {
-		e.preventDefault()
-		logClickM.mutate(category.id)
-	}
-}
-function CategoryReactQuery({id}: {id: number}) {
-	const query = useQuery(
-		[cacheKeys.category, id],
-		() => api.getCategory({id}),
-		{refetchOnMount: false, refetchInterval: 10_000},
-	)
-	const logClickM = useMutation((id: number) => api.logClick({id}))
-	const onClick = useCallback(onClickCb, [])
-	return <CategoryView {...query} onClick={onClick} />
-	function onClickCb(e: any, category: Category) {
-		e.preventDefault()
-		logClickM.mutate(category.id)
-	}
-}
-
-
 function UseQueryCustomDemo() {
 	return <div>
 		<p style={{maxWidth: 500}}>
@@ -184,6 +119,20 @@ function UseQueryCustomDemo() {
 		<CategoryUseQueryCustom id={1} />
 	</div>
 }
+
+
+function PokemonRtk({nameSlug}: {nameSlug: string}) {
+	const query = useGetPokemonByNameQuery(nameSlug, {pollingInterval: 10_000})
+	return <PokemonView {...query} />
+}
+function PokemonReactQuery({nameSlug}: {nameSlug: string}) {
+	const query = useQuery(
+		['getPokemonByName', nameSlug],
+		() => api.getPokemonByName(nameSlug),
+		{refetchOnMount: false, refetchInterval: 10_000},
+	)
+	return <PokemonView {...query} />
+}
 function PokemonUseQueryCustom({nameSlug}: {nameSlug: string}) {
 	const query = useQueryCustom(
 		api.getPokemonByName,
@@ -192,15 +141,49 @@ function PokemonUseQueryCustom({nameSlug}: {nameSlug: string}) {
 	)
 	return <PokemonView {...query} />
 }
+
+
+function CategoriesRtk() {
+	const query = useGetCategoriesQuery({}, {pollingInterval: 10_000})
+	return <CategoriesView {...query} />
+}
+function CategoriesReactQuery() {
+	const query = useQuery(
+		cacheKeys.category,
+		() => api.getCategories(),
+		{refetchOnMount: false, refetchInterval: 10_000},
+	)
+	return <CategoriesView {...query} />
+}
 function CategoriesUseQueryCustom() {
 	const query = useQueryCustom(
 		api.getCategories, [],
 		{refetchOnMount: false, refetchInterval: 10_000}
 	)
-	const logClickM = useMutationCustom((id: number) => api.logClick({id}))
+	return <CategoriesView {...query} />
+}
+
+
+function CategoryRtk({id}: {id: number}) {
+	const query = useGetCategoryQuery({id}, {pollingInterval: 10_000})
+	const [logClick] = useLogClickMutation()
 	const onClick = useCallback(onClickCb, [])
-	return <CategoriesView {...query} onClick={onClick} />
-	
+	return <CategoryView {...query} onClick={onClick} />
+	function onClickCb(e: any, category: Category) {
+		e.preventDefault()
+		logClick({id: category.id})
+			.then(r => 'error' in r && console.error(r.error.message))
+	}
+}
+function CategoryReactQuery({id}: {id: number}) {
+	const query = useQuery(
+		[cacheKeys.category, id],
+		() => api.getCategory({id}),
+		{refetchOnMount: false, refetchInterval: 10_000},
+	)
+	const logClickM = useMutation((id: number) => api.logClick({id}))
+	const onClick = useCallback(onClickCb, [])
+	return <CategoryView {...query} onClick={onClick} />
 	function onClickCb(e: any, category: Category) {
 		e.preventDefault()
 		logClickM.mutate(category.id)
@@ -253,13 +236,11 @@ function PokemonView({
 function CategoriesView({
 	data,
 	error,
-	isLoading,
-	onClick
+	isLoading
 }: {
 	data?: readonly Category[],
 	error?: any,
 	isLoading: boolean,
-	onClick(e: any, category: Category): any
 }) {
 	return (
 		<div>
@@ -267,12 +248,13 @@ function CategoriesView({
 			{isLoading ? (
 				<>Loading...</>
 			)	: data !== undefined ? (
-				data.map(c => (
-					<div key={c.id}>
-						<a href="#" onClick={e => onClick(e, c)}>{c.tag}</a>{' '}
-						- {c.clickCount}
-					</div>
-				))
+				<ol>
+					{data.map(c => (
+						<li key={c.id}>
+							{c.tag} / Clicks: {c.clickCount}
+						</li>
+					))}
+				</ol>
 			) : (
 				<>Error: {error?.message || 'unknown'}</>
 			)}
@@ -294,12 +276,11 @@ function CategoryView({
 
 	return (
 		<div>
-			<h4>Category</h4>
 			{isLoading ? (
 				<>Loading...</>
 			)	: data !== undefined ? (
 				<div>
-					<a href="#" onClick={e => onClick(e, data)}>{data.tag}</a>{' '}
+					Category: <a href="#" onClick={e => onClick(e, data)}>{data.tag}</a>{' '}
 							- {data.clickCount}
 				</div>
 			) : (
