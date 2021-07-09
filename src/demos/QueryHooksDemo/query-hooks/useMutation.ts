@@ -22,21 +22,21 @@ export default function useMutation<
 	} = {},
 ) {
 
-	const mutateCb = useCallback(mutate, [mutator])
+	const mutate = useCallback(mutateCb, [mutator])
 
 	const [state, setState] = useState<HookState<MutatorShape>>({
-		mutate: mutateCb,
+		mutate,
 		isLoading: false,
 		data: undefined,
 		error: undefined,
 	})
 	return state
 
-	async function mutate(...params: Parameters<MutatorShape>): Promise<ThenArg<ReturnType<MutatorShape>>> {
+	async function mutateCb(...params: Parameters<MutatorShape>): Promise<ThenArg<ReturnType<MutatorShape>>> {
 		if (state.isLoading)
 			throw new Error('Cannot call mutation while prior call is still running')
 		setState({
-			mutate: mutateCb,
+			mutate,
 			isLoading: true,
 			data: undefined,
 			error: undefined,
@@ -46,7 +46,7 @@ export default function useMutation<
 			await mutator(...params)
 				.then(async res => {
 					setState({
-						mutate: mutateCb,
+						mutate,
 						isLoading: false,
 						data: res,
 						error: undefined,
@@ -56,7 +56,7 @@ export default function useMutation<
 				})
 				.catch(error => {
 					setState({
-						mutate: mutateCb,
+						mutate,
 						isLoading: false,
 						data: undefined,
 						error,

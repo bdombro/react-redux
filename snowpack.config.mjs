@@ -32,4 +32,10 @@ export default {
 	buildOptions: {
 		/* ... */
 	},
+	alias: {
+		'#src': './src',
+		'#lib': './src/lib',
+		'#api': './src/api',
+		'#services': './src/services',
+	}
 }

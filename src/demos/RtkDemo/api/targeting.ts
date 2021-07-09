@@ -1,7 +1,7 @@
 import { miniSerializeError } from '@reduxjs/toolkit'
 import { createApi } from '@reduxjs/toolkit/query/react'
 
-import {getClient} from '../../services/targeting'
+import {getClient} from '#services/targeting'
 
 type Client = ReturnTypeP<typeof getClient>
 interface TargetingBaseQueryArgs<P extends Record<string,any>> {method: keyof Client, params: P}
