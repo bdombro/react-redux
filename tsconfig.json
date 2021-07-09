@@ -6,24 +6,20 @@
     "moduleResolution": "node",
     "jsx": "preserve",
     "baseUrl": "./",
-    /* paths - import rewriting/resolving */
     "paths": {
 			"#src/*": ["./src/*"],
       "#lib/*": ["./src/lib/*"],
       "#api/*": ["./src/api/*"],
       "#services/*": ["./src/services/*"],
-      // Add this line to get types for streaming imports (packageOptions.source="remote"):
       "*": [".snowpack/types/*"]
 		},
-    /* noEmit - Snowpack builds (emits) files, not tsc. */
     "noEmit": true,
-    /* Additional Options */
     "strict": true,
     "skipLibCheck": true,
     "types": ["mocha", "snowpack-env"],
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
-    "importsNotUsedAsValues": "error",
+    "importsNotUsedAsValues": "error"
   }
 }
