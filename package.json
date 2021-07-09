@@ -6,7 +6,7 @@
   "license": "ISC",
   "scripts": {
     "start": "snowpack dev",
-    "build": "snowpack build",
+    "build": "NODE_ENV=production snowpack build",
     "test": "web-test-runner \"src/**/*.test.tsx\"",
     "validate": "pnpm run lint && tsc --noEmit",
     "lint": "eslint --cache --ext .ts,.tsx src",
