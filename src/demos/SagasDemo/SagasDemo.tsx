@@ -1,12 +1,12 @@
-import React, {useLayoutEffect} from 'react'
+import React from 'react'
 import { Provider } from 'react-redux'
 
 import * as baseComponents from '#src/components'
 
-import store from './store'
-import { fetchCategories, fetchCategory } from './ducks/api/actions'
-import { getCategories, getCategory } from './ducks/api/selectors'
+import { fetchCategories } from './ducks/api/actions'
+import { getCategories } from './ducks/api/selectors'
 import { useSagaSelector } from './hooks'
+import store from './store'
 
 export default function SagasDemo() {
 	return (
@@ -18,17 +18,17 @@ export default function SagasDemo() {
 
 function WithStore() {
 	return (
-			<div>
-				<p style={{maxWidth: 500}}>
+		<div>
+			<p style={{maxWidth: 500}}>
 					A Redux Sagas strategy for accessing an API. Despite my best efforts, I have not yet found{' '}
 					a clean/good way to use Redux+Sagas for fetching and caching data with args (i.e. getCategory(2){' '}
 					and getCategory(3) simultaneously).
-				</p>
-				<p>Bundle Size: 3.8kb mini+gz + Redux (1.6kb mini+gz)</p>
-				<h3>GRPC-Web Example</h3>
-				<Categories />
-				<Categories />
-			</div>
+			</p>
+			<p>Bundle Size: 3.8kb mini+gz + Redux (1.6kb mini+gz)</p>
+			<h3>GRPC-Web Example</h3>
+			<Categories />
+			<Categories />
+		</div>
 	)
 }
 
