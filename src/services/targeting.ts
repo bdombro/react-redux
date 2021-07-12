@@ -39,9 +39,10 @@ class Categories {
 		this.update = this.update.bind(this)
 		this.logClick = this.logClick.bind(this)
 	}
-	async readMany(props: Record<string, unknown>) {
+	async readMany(props?: {where?: {field: 'id', op: 'in',  params: number[]}}) {
 		console.log('readMany was called')
 		return this.categories
+			.filter(c => props?.where?.field === 'id' ? props?.where?.params.includes(c.id) : true)
 	}
 	async readOne({id}: {id: Category['id']}) {
 		console.log('readOne was called')

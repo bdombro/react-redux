@@ -17,8 +17,8 @@ export default function PokemonDetail({
 					Loading...
 				</>
 				|| data !== undefined && <>
-					<h3>{data.species.name}</h3>
-					<img src={data.sprites.front_shiny} alt={data.species.name} />
+					<h3>{data.name}</h3>
+					<img src={data.sprites.front_shiny} alt={data.name} />
 				</>
 				|| <>
 					Error: {error ? 'Not Found' : 'unknown'}

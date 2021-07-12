@@ -2,6 +2,7 @@ import React, {useState} from 'react'
 
 import QueryHooksDemo from './demos/QueryHooksDemo'
 import ReactQueryDemo from './demos/ReactQueryDemo'
+import RestHooksDemo from './demos/RestHooksDemo'
 import RtkDemo from './demos/RtkDemo'
 import SagasDemo from './demos/SagasDemo'
 import SliceDemo from './demos/SliceDemo'
@@ -15,6 +16,7 @@ export default function App() {
 				<option value='Slices'>Redux Toolkit Slices</option>
 				<option value='RTK'>Redux Toolkit RTK</option>
 				<option value='react-query'>react-query</option>
+				<option value='rest-hooks'>rest-hooks</option>
 				<option value='query-hooks'>query-hooks</option>
 				<option value='saga'>Redux Saga</option>
 			</select>
@@ -23,6 +25,7 @@ export default function App() {
 				|| fetchLib === 'Slices' && <SliceDemo />
 				|| fetchLib === 'RTK' && <RtkDemo />
 				|| fetchLib === 'react-query' && <ReactQueryDemo />
+				|| fetchLib === 'rest-hooks' && <RestHooksDemo />
 				|| fetchLib === 'query-hooks' && <QueryHooksDemo />
 				|| fetchLib === 'saga' && <SagasDemo />
 				|| <>Error: Unknown Selection</>
